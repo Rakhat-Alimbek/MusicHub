@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MusicHub — Музыкальная платформа</title>
+<link href="style.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">Music<span>Hub</span></div>
+
+  <nav class="nav">
+    <button class="active" onclick="showPage('home', this)">Главная</button>
+    <button onclick="showPage('catalog', this)">Каталог</button>
+    <button onclick="showPage('artists', this)">Артисты</button>
+    <button onclick="showPage('playlists', this)">Плейлисты</button>
+  </nav>
+
+  <div class="search-wrap">
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" placeholder="Поиск треков, артистов..." id="searchInput" oninput="handleSearch(this.value)" onfocus="openSearch()" onblur="closeSearchDelay()">
+    </div>
+    <div class="search-results" id="searchResults">
+      <div class="search-results-inner" id="searchResultsInner"></div>
+    </div>
+  </div>
+
+  <div class="user-area">
+    <button class="btn-auth" onclick="openModal('login')">Войти</button>
+    <button class="btn-signup" onclick="openModal('register')">Регистрация</button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main>
+  <!-- LEFT SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <h3>Меню</h3>
+      <div class="sidebar-item active" onclick="showPage('home', null); setActive(this)">
+        <span class="icon">🏠</span> Главная
+      </div>
+      <div class="sidebar-item" onclick="showPage('catalog', null); setActive(this)">
+        <span class="icon">🎵</span> Треки
+      </div>
+      <div class="sidebar-item" onclick="showPage('artists', null); setActive(this)">
+        <span class="icon">🎤</span> Артисты
+      </div>
+      <div class="sidebar-item" onclick="showPage('liked', null); setActive(this)">
+        <span class="icon">❤️</span> Избранное
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Мои плейлисты</h3>
+      <div id="sidebarPlaylists"></div>
+      <div class="sidebar-item" onclick="createPlaylist()" style="color: var(--muted); border: 1px dashed var(--border); margin-top: 6px;">
+        <span class="icon">＋</span> Создать
+      </div>
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- HOME PAGE -->
+    <div class="page active" id="page-home">
+      <div style="margin-bottom: 32px;">
+        <h1 style="font-family: 'Space Mono', monospace; font-size: 28px; margin-bottom: 8px; letter-spacing: -1px;">
+          Добро пожаловать<br><span style="color: var(--accent);">в MusicHub</span> 🎧
+        </h1>
+        <p style="color: var(--muted); font-size: 15px;">Слушай, скачивай, открывай новую музыку</p>
+      </div>
+
+      <div class="genre-chips" id="genreChips"></div>
+
+      <div class="section-header">
+        <span class="section-title">Популярные треки</span>
+        <span class="see-all" onclick="showPage('catalog', null)">Все треки →</span>
+      </div>
+      <div class="track-list" id="trackListHome"></div>
+
+      <div class="section-header">
+        <span class="section-title">Альбомы</span>
+      </div>
+      <div class="album-grid" id="albumGrid"></div>
+    </div>
+
+    <!-- CATALOG PAGE -->
+    <div class="page" id="page-catalog">
+      <div class="section-header">
+        <span class="section-title">Все треки</span>
+      </div>
+      <div class="genre-chips" id="catalogGenreChips"></div>
+      <div class="track-list" id="trackListCatalog"></div>
+    </div>
+
+    <!-- ARTISTS PAGE -->
+    <div class="page" id="page-artists">
+      <div class="section-header">
+        <span class="section-title">Артисты</span>
+      </div>
+      <div class="artist-grid" id="artistGrid"></div>
+    </div>
+
+    <!-- LIKED PAGE -->
+    <div class="page" id="page-liked">
+      <div class="section-header">
+        <span class="section-title">Избранное</span>
+      </div>
+      <div class="track-list" id="trackListLiked"></div>
+      <p id="likedEmpty" style="color: var(--muted); font-size: 14px; display: none;">Нет избранных треков. Нажмите ❤️ на любом треке.</p>
+    </div>
+
+    <!-- PLAYLISTS PAGE -->
+    <div class="page" id="page-playlists">
+      <div class="section-header">
+        <span class="section-title">Плейлисты</span>
+        <button class="btn-signup" onclick="createPlaylist()" style="font-size: 13px; padding: 6px 14px;">＋ Новый</button>
+      </div>
+      <div class="album-grid" id="playlistGrid"></div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="panel-section">
+      <h3>Статистика</h3>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="statTracks">0</div>
+          <div class="stat-label">Треков</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statPlays">0</div>
+          <div class="stat-label">Прослушиваний</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statLiked">0</div>
+          <div class="stat-label">Избранных</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statArtists">0</div>
+          <div class="stat-label">Артистов</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <h3>Очередь воспроизведения</h3>
+      <div id="queueList"></div>
+    </div>
+  </div>
+</main>
+
+<!-- PLAYER -->
+<div class="player">
+  <div class="now-playing">
+    <div class="now-cover" id="playerCover">🎵</div>
+    <div class="now-info">
+      <div class="now-title" id="playerTitle">Нет трека</div>
+      <div class="now-artist" id="playerArtist">—</div>
+    </div>
+    <button class="now-like" id="playerLike" onclick="toggleLikeCurrent()">♡</button>
+  </div>
+
+  <div class="player-controls">
+    <div class="ctrl-buttons">
+      <button class="ctrl-btn" title="Перемешать" onclick="toggleShuffle(this)">🔀</button>
+      <button class="ctrl-btn" onclick="prevTrack()">⏮</button>
+      <button class="ctrl-btn play-btn" id="mainPlayBtn" onclick="togglePlay()">▶</button>
+      <button class="ctrl-btn" onclick="nextTrack()">⏭</button>
+      <button class="ctrl-btn" title="Повтор" onclick="toggleRepeat(this)">🔁</button>
+    </div>
+    <div class="progress-bar">
+      <span class="time-label" id="currentTime">0:00</span>
+      <div class="progress-track" id="progressTrack" onclick="seekProgress(event)">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+      </div>
+      <span class="time-label right" id="totalTime">0:00</span>
+    </div>
+  </div>
+
+  <div class="player-right">
+    <div class="volume-wrap">
+      <span class="vol-icon" onclick="toggleMute()">🔊</span>
+      <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70" oninput="setVolume(this.value)">
+    </div>
+    <button class="ctrl-btn" style="font-size: 14px;" onclick="downloadCurrent()" title="Скачать">⬇</button>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="authModal" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2 id="modalTitle">Вход</h2>
+    <p class="modal-sub" id="modalSub">Рады видеть тебя снова!</p>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tabLogin" onclick="switchTab('login')">Вход</button>
+      <button class="modal-tab" id="tabRegister" onclick="switchTab('register')">Регистрация</button>
+    </div>
+    <div id="loginForm">
+      <div class="field"><label>EMAIL</label><input type="email" placeholder="your@email.com" id="loginEmail"></div>
+      <div class="field"><label>ПАРОЛЬ</label><input type="password" placeholder="••••••••" id="loginPass"></div>
+      <button class="modal-btn" onclick="doLogin()">Войти</button>
+    </div>
+    <div id="registerForm" style="display:none;">
+      <div class="field"><label>ИМЯ</label><input type="text" placeholder="Твоё имя" id="regName"></div>
+      <div class="field"><label>EMAIL</label><input type="email" placeholder="your@email.com" id="regEmail"></div>
+      <div class="field"><label>ПАРОЛЬ</label><input type="password" placeholder="Минимум 8 символов" id="regPass"></div>
+      <button class="modal-btn" onclick="doRegister()">Создать аккаунт</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────
+const GENRES = ['Все', 'Поп', 'Рок', 'Хип-хоп', 'Электронная', 'Джаз', 'R&B', 'Инди'];
+
+const TRACKS = [
+  { id: 1,  emoji: '🌊', bg: 'linear-gradient(135deg,#1a1a4e,#2d4a8a)', title: 'Ocean Drive',        artist: 'Duke Dumont',    genre: 'Электронная', duration: '4:28', year: 2014 },
+  { id: 2,  emoji: '🌙', bg: 'linear-gradient(135deg,#2d1b3d,#6b3fa0)', title: 'Blinding Lights',   artist: 'The Weeknd',     genre: 'Поп',          duration: '3:20', year: 2019 },
+  { id: 3,  emoji: '🔥', bg: 'linear-gradient(135deg,#3d1a0a,#b33000)', title: 'HUMBLE.',           artist: 'Kendrick Lamar', genre: 'Хип-хоп',      duration: '2:57', year: 2017 },
+  { id: 4,  emoji: '🌿', bg: 'linear-gradient(135deg,#0a2a1a,#006633)', title: 'Green Eyes',        artist: 'Erykah Badu',    genre: 'R&B',           duration: '5:11', year: 2000 },
+  { id: 5,  emoji: '⚡', bg: 'linear-gradient(135deg,#1a1a00,#665500)', title: 'Thunderstruck',     artist: 'AC/DC',          genre: 'Рок',           duration: '4:52', year: 1990 },
+  { id: 6,  emoji: '🎷', bg: 'linear-gradient(135deg,#1a0a0a,#5c1a0a)', title: 'So What',          artist: 'Miles Davis',    genre: 'Джаз',          duration: '9:22', year: 1959 },
+  { id: 7,  emoji: '🌸', bg: 'linear-gradient(135deg,#2a0a2a,#7a1a7a)', title: 'Motion Sickness',  artist: 'Phoebe Bridgers', genre: 'Инди',         duration: '3:30', year: 2017 },
+  { id: 8,  emoji: '🚀', bg: 'linear-gradient(135deg,#0a0a3a,#0a2a6a)', title: 'Digital Love',     artist: 'Daft Punk',      genre: 'Электронная', duration: '4:58', year: 2001 },
+  { id: 9,  emoji: '💫', bg: 'linear-gradient(135deg,#1a1a1a,#3a1a5a)', title: 'Levitating',       artist: 'Dua Lipa',       genre: 'Поп',          duration: '3:23', year: 2020 },
+  { id: 10, emoji: '🎸', bg: 'linear-gradient(135deg,#1a0a0a,#4a0a0a)', title: 'Bohemian Rhapsody', artist: 'Queen',         genre: 'Рок',           duration: '5:55', year: 1975 },
+  { id: 11, emoji: '🌅', bg: 'linear-gradient(135deg,#2a1a00,#6a4a00)', title: 'Redbone',          artist: 'Childish Gambino', genre: 'R&B',        duration: '5:27', year: 2016 },
+  { id: 12, emoji: '🌃', bg: 'linear-gradient(135deg,#0a0a2a,#2a0a4a)', title: 'Midnight City',    artist: 'M83',            genre: 'Инди',         duration: '4:03', year: 2011 },
+];
+
+const ARTISTS = [
+  { name: 'The Weeknd',       emoji: '🌙', bg: 'linear-gradient(135deg,#2d1b3d,#6b3fa0)', genre: 'Поп / R&B' },
+  { name: 'Daft Punk',        emoji: '🤖', bg: 'linear-gradient(135deg,#0a0a3a,#0a2a6a)', genre: 'Электронная' },
+  { name: 'Kendrick Lamar',   emoji: '👑', bg: 'linear-gradient(135deg,#3d1a0a,#b33000)', genre: 'Хип-хоп' },
+  { name: 'Dua Lipa',         emoji: '💎', bg: 'linear-gradient(135deg,#2a003a,#8a00aa)', genre: 'Поп' },
+  { name: 'AC/DC',            emoji: '⚡', bg: 'linear-gradient(135deg,#1a1a00,#665500)', genre: 'Рок' },
+  { name: 'Miles Davis',      emoji: '🎷', bg: 'linear-gradient(135deg,#1a0a0a,#5c1a0a)', genre: 'Джаз' },
+  { name: 'Phoebe Bridgers',  emoji: '🌸', bg: 'linear-gradient(135deg,#2a0a2a,#7a1a7a)', genre: 'Инди' },
+  { name: 'Erykah Badu',      emoji: '✨', bg: 'linear-gradient(135deg,#0a2a1a,#006633)', genre: 'R&B' },
+];
+
+const ALBUMS = [
+  { title: 'After Hours',      artist: 'The Weeknd',     emoji: '🌙', bg: 'linear-gradient(135deg,#2d1b3d,#6b3fa0)', year: 2020 },
+  { title: 'Random Access',    artist: 'Daft Punk',      emoji: '🤖', bg: 'linear-gradient(135deg,#0a0a3a,#3a2a7a)', year: 2013 },
+  { title: 'DAMN.',            artist: 'Kendrick Lamar', emoji: '🔥', bg: 'linear-gradient(135deg,#3d1a0a,#b33000)', year: 2017 },
+  { title: 'Future Nostalgia', artist: 'Dua Lipa',       emoji: '💫', bg: 'linear-gradient(135deg,#2a003a,#8a00aa)', year: 2020 },
+  { title: "Back in Black",    artist: 'AC/DC',          emoji: '⚡', bg: 'linear-gradient(135deg,#1a1a00,#665500)', year: 1980 },
+  { title: 'Kind of Blue',     artist: 'Miles Davis',    emoji: '🎷', bg: 'linear-gradient(135deg,#1a0a0a,#5c1a0a)', year: 1959 },
+];
+
+// ─── STATE ──────────────────────────────────────────────────────────
+let currentTrack = null;
+let currentIndex = 0;
+let isPlaying = false;
+let progress = 0;
+let progressInterval = null;
+let likedTracks = new Set();
+let playlists = [
+  { id: 1, name: 'Любимые', emoji: '❤️', bg: 'linear-gradient(135deg,#3d0a1a,#aa003a)', tracks: [] },
+  { id: 2, name: 'Вечерние', emoji: '🌙', bg: 'linear-gradient(135deg,#0a0a3d,#2a0a7a)', tracks: [] },
+];
+let queue = [...TRACKS];
+let filterGenre = 'Все';
+let playCount = 0;
+let shuffle = false;
+let repeat = false;
+
+// ─── INIT ────────────────────────────────────────────────────────────
+function init() {
+  renderGenreChips('genreChips');
+  renderGenreChips('catalogGenreChips');
+  renderTrackList('trackListHome', TRACKS.slice(0, 8));
+  renderTrackList('trackListCatalog', TRACKS);
+  renderArtists();
+  renderAlbums();
+  renderPlaylists();
+  renderQueue();
+  updateStats();
+  setQueue(TRACKS);
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────
+function renderGenreChips(containerId) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = GENRES.map(g => `
+    <div class="chip ${g === filterGenre ? 'active' : ''}" onclick="setGenre('${g}', this, '${containerId}')">
+      ${g}
+    </div>
+  `).join('');
+}
+
+function setGenre(genre, chip, containerId) {
+  filterGenre = genre;
+  document.querySelectorAll('.genre-chips .chip').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.genre-chips').forEach(el => {
+    el.querySelectorAll('.chip').forEach(c => {
+      if (c.textContent.trim() === genre) c.classList.add('active');
+    });
+  });
+
+  const filtered = genre === 'Все' ? TRACKS : TRACKS.filter(t => t.genre === genre);
+  renderTrackList('trackListHome', filtered.slice(0, 8));
+  renderTrackList('trackListCatalog', filtered);
+  setQueue(filtered);
+}
+
+function renderTrackList(containerId, tracks) {
+  const el = document.getElementById(containerId);
+  if (!tracks.length) {
+    el.innerHTML = '<p style="color:var(--muted);padding:16px;">Треков не найдено</p>';
+    return;
+  }
+  el.innerHTML = tracks.map((t, i) => `
+    <div class="track-row ${currentTrack && currentTrack.id === t.id ? 'playing' : ''}" id="row-${t.id}" onclick="playTrack(${t.id})">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="track-num">${currentTrack && currentTrack.id === t.id ? '' : i + 1}</span>
+        ${currentTrack && currentTrack.id === t.id ? '<div class="eq-bars"><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div></div>' : ''}
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;overflow:hidden;">
+        <div class="track-cover" style="background:${t.bg}">${t.emoji}</div>
+        <div class="track-info">
+          <div class="track-name">${t.title}</div>
+          <div class="track-artist">${t.artist} · ${t.genre}</div>
+        </div>
+      </div>
+      <span class="track-duration">${t.duration}</span>
+      <button class="track-like ${likedTracks.has(t.id) ? 'liked' : ''}" onclick="toggleLike(event, ${t.id})">${likedTracks.has(t.id) ? '♥' : '♡'}</button>
+    </div>
+  `).join('');
+}
+
+function renderArtists() {
+  document.getElementById('artistGrid').innerHTML = ARTISTS.map(a => `
+    <div class="artist-card" onclick="showToast('Переход к ${a.name}')">
+      <div class="artist-avatar" style="background:${a.bg}">${a.emoji}</div>
+      <div class="artist-name">${a.name}</div>
+      <div class="artist-genre">${a.genre}</div>
+    </div>
+  `).join('');
+}
+
+function renderAlbums() {
+  document.getElementById('albumGrid').innerHTML = ALBUMS.map(a => `
+    <div class="album-card" onclick="showToast('Открыт альбом: ${a.title}')">
+      <div class="album-art" style="background:${a.bg}">${a.emoji}</div>
+      <div class="album-title">${a.title}</div>
+      <div class="album-artist">${a.artist}</div>
+      <div class="album-year">${a.year}</div>
+    </div>
+  `).join('');
+}
+
+function renderPlaylists() {
+  // Sidebar
+  document.getElementById('sidebarPlaylists').innerHTML = playlists.map(p => `
+    <div class="playlist-item" onclick="openPlaylist(${p.id})">
+      <div class="pl-thumb" style="background:${p.bg}">${p.emoji}</div>
+      <div class="pl-info">
+        <div class="pl-name">${p.name}</div>
+        <div class="pl-count">${p.tracks.length} треков</div>
+      </div>
+    </div>
+  `).join('');
+
+  // Page
+  document.getElementById('playlistGrid').innerHTML = playlists.map(p => `
+    <div class="album-card" onclick="openPlaylist(${p.id})">
+      <div class="album-art" style="background:${p.bg}">${p.emoji}</div>
+      <div class="album-title">${p.name}</div>
+      <div class="album-artist">${p.tracks.length} треков</div>
+    </div>
+  `).join('');
+}
+
+function renderQueue() {
+  document.getElementById('queueList').innerHTML = queue.slice(0, 8).map((t, i) => `
+    <div class="queue-item ${currentTrack && currentTrack.id === t.id ? 'current' : ''}" onclick="playTrack(${t.id})">
+      <span class="q-num">${currentTrack && currentTrack.id === t.id ? '▶' : i + 1}</span>
+      <div class="q-cover" style="background:${t.bg}">${t.emoji}</div>
+      <div class="q-info">
+        <div class="q-name">${t.title}</div>
+        <div class="q-artist">${t.artist}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderLiked() {
+  const liked = TRACKS.filter(t => likedTracks.has(t.id));
+  renderTrackList('trackListLiked', liked);
+  document.getElementById('likedEmpty').style.display = liked.length ? 'none' : 'block';
+}
+
+// ─── PLAYER LOGIC ────────────────────────────────────────────────────
+function setQueue(tracks) {
+  queue = [...tracks];
+  renderQueue();
+}
+
+function playTrack(id) {
+  const track = TRACKS.find(t => t.id === id);
+  if (!track) return;
+
+  currentTrack = track;
+  currentIndex = queue.findIndex(t => t.id === id);
+  if (currentIndex === -1) { queue.unshift(track); currentIndex = 0; }
+
+  isPlaying = true;
+  progress = 0;
+  playCount++;
+
+  document.getElementById('playerCover').textContent = track.emoji;
+  document.getElementById('playerCover').style.background = track.bg;
+  document.getElementById('playerCover').classList.add('playing-anim');
+  document.getElementById('playerTitle').textContent = track.title;
+  document.getElementById('playerArtist').textContent = track.artist;
+  document.getElementById('mainPlayBtn').textContent = '⏸';
+  document.getElementById('playerLike').textContent = likedTracks.has(track.id) ? '♥' : '♡';
+  document.getElementById('playerLike').className = 'now-like' + (likedTracks.has(track.id) ? ' liked' : '');
+
+  const [min, sec] = track.duration.split(':').map(Number);
+  const total = min * 60 + sec;
+  document.getElementById('totalTime').textContent = track.duration;
+
+  clearInterval(progressInterval);
+  progressInterval = setInterval(() => {
+    if (!isPlaying) return;
+    progress += 100 / (total * 4);
+    if (progress >= 100) {
+      progress = 100;
+      clearInterval(progressInterval);
+      setTimeout(() => nextTrack(), 500);
+    }
+    document.getElementById('progressFill').style.width = progress + '%';
+    const elapsed = Math.floor((progress / 100) * total);
+    document.getElementById('currentTime').textContent = `${Math.floor(elapsed/60)}:${String(elapsed%60).padStart(2,'0')}`;
+  }, 250);
+
+  updateStats();
+  refreshAllTrackLists();
+  renderQueue();
+}
+
+function togglePlay() {
+  if (!currentTrack) { playTrack(queue[0]?.id); return; }
+  isPlaying = !isPlaying;
+  document.getElementById('mainPlayBtn').textContent = isPlaying ? '⏸' : '▶';
+  if (!isPlaying) document.getElementById('playerCover').classList.remove('playing-anim');
+  else document.getElementById('playerCover').classList.add('playing-anim');
+}
+
+function nextTrack() {
+  if (!queue.length) return;
+  if (shuffle) {
+    currentIndex = Math.floor(Math.random() * queue.length);
+  } else {
+    currentIndex = (currentIndex + 1) % queue.length;
+    if (repeat && currentIndex === 0) currentIndex = 0;
+  }
+  playTrack(queue[currentIndex]?.id);
+}
+
+function prevTrack() {
+  if (progress > 10) { progress = 0; document.getElementById('progressFill').style.width = '0%'; return; }
+  if (!queue.length) return;
+  currentIndex = (currentIndex - 1 + queue.length) % queue.length;
+  playTrack(queue[currentIndex]?.id);
+}
+
+function toggleShuffle(btn) {
+  shuffle = !shuffle;
+  btn.style.color = shuffle ? 'var(--accent)' : '';
+  showToast(shuffle ? 'Перемешивание включено 🔀' : 'Перемешивание выключено');
+}
+
+function toggleRepeat(btn) {
+  repeat = !repeat;
+  btn.style.color = repeat ? 'var(--accent)' : '';
+  showToast(repeat ? 'Повтор включён 🔁' : 'Повтор выключен');
+}
+
+function seekProgress(e) {
+  const rect = e.currentTarget.getBoundingClientRect();
+  progress = ((e.clientX - rect.left) / rect.width) * 100;
+  document.getElementById('progressFill').style.width = progress + '%';
+}
+
+function setVolume(v) {
+  document.querySelector('.vol-icon').textContent = v > 50 ? '🔊' : v > 0 ? '🔉' : '🔇';
+}
+
+function toggleMute() {
+  const s = document.getElementById('volumeSlider');
+  s.value = s.value > 0 ? 0 : 70;
+  setVolume(s.value);
+}
+
+function downloadCurrent() {
+  if (!currentTrack) { showToast('Сначала выберите трек'); return; }
+  showToast(`Скачивание: ${currentTrack.title} (MP3 320kbps) ⬇`);
+}
+
+// ─── LIKES ───────────────────────────────────────────────────────────
+function toggleLike(e, id) {
+  e.stopPropagation();
+  if (likedTracks.has(id)) {
+    likedTracks.delete(id);
+    showToast('Удалено из избранного');
+  } else {
+    likedTracks.add(id);
+    showToast('Добавлено в избранное ❤️');
+  }
+  if (currentTrack && currentTrack.id === id) {
+    document.getElementById('playerLike').textContent = likedTracks.has(id) ? '♥' : '♡';
+    document.getElementById('playerLike').className = 'now-like' + (likedTracks.has(id) ? ' liked' : '');
+  }
+  updateStats();
+  refreshAllTrackLists();
+  renderLiked();
+}
+
+function toggleLikeCurrent() {
+  if (!currentTrack) return;
+  toggleLike({ stopPropagation: () => {} }, currentTrack.id);
+}
+
+function refreshAllTrackLists() {
+  const filtered = filterGenre === 'Все' ? TRACKS : TRACKS.filter(t => t.genre === filterGenre);
+  renderTrackList('trackListHome', filtered.slice(0, 8));
+  renderTrackList('trackListCatalog', filtered);
+  renderLiked();
+}
+
+// ─── PLAYLISTS ───────────────────────────────────────────────────────
+function createPlaylist() {
+  const name = prompt('Название плейлиста:');
+  if (!name) return;
+  const emojis = ['🎵', '🎸', '🎹', '🎺', '🎼', '🥁'];
+  const bgs = [
+    'linear-gradient(135deg,#0a2a3a,#006688)',
+    'linear-gradient(135deg,#2a0a3a,#660088)',
+    'linear-gradient(135deg,#3a2a0a,#886600)',
+    'linear-gradient(135deg,#0a3a0a,#006600)',
+  ];
+  playlists.push({
+    id: Date.now(),
+    name,
+    emoji: emojis[Math.floor(Math.random() * emojis.length)],
+    bg: bgs[Math.floor(Math.random() * bgs.length)],
+    tracks: [],
+  });
+  renderPlaylists();
+  showToast(`Плейлист "${name}" создан ✓`);
+}
+
+function openPlaylist(id) {
+  const pl = playlists.find(p => p.id === id);
+  if (pl) showToast(`Плейлист: ${pl.name}`);
+}
+
+// ─── STATS ───────────────────────────────────────────────────────────
+function updateStats() {
+  document.getElementById('statTracks').textContent = TRACKS.length;
+  document.getElementById('statPlays').textContent = playCount;
+  document.getElementById('statLiked').textContent = likedTracks.size;
+  document.getElementById('statArtists').textContent = ARTISTS.length;
+}
+
+// ─── SEARCH ──────────────────────────────────────────────────────────
+let searchTimeout;
+
+function handleSearch(q) {
+  clearTimeout(searchTimeout);
+  if (!q.trim()) { closeSearch(); return; }
+  searchTimeout = setTimeout(() => {
+    const query = q.toLowerCase();
+    const foundTracks = TRACKS.filter(t =>
+      t.title.toLowerCase().includes(query) || t.artist.toLowerCase().includes(query)
+    );
+    const foundArtists = ARTISTS.filter(a => a.name.toLowerCase().includes(query));
+
+    let html = '';
+    if (foundTracks.length) {
+      html += `<div class="sr-section"><div class="sr-label">Треки</div>`;
+      html += foundTracks.slice(0, 4).map(t => `
+        <div class="sr-item" onclick="playTrack(${t.id}); closeSearch()">
+          <div class="sr-icon" style="background:${t.bg}">${t.emoji}</div>
+          <div class="sr-text">
+            <div class="sr-name">${t.title}</div>
+            <div class="sr-meta">${t.artist} · ${t.genre}</div>
+          </div>
+        </div>
+      `).join('');
+      html += '</div>';
+    }
+    if (foundArtists.length) {
+      html += `<div class="sr-section"><div class="sr-label">Артисты</div>`;
+      html += foundArtists.slice(0, 3).map(a => `
+        <div class="sr-item" onclick="showToast('${a.name}'); closeSearch()">
+          <div class="sr-icon" style="background:${a.bg};border-radius:50%">${a.emoji}</div>
+          <div class="sr-text">
+            <div class="sr-name">${a.name}</div>
+            <div class="sr-meta">${a.genre}</div>
+          </div>
+        </div>
+      `).join('');
+      html += '</div>';
+    }
+
+    if (!html) html = '<p style="padding:16px;color:var(--muted);font-size:14px;">Ничего не найдено</p>';
+    document.getElementById('searchResultsInner').innerHTML = html;
+    document.getElementById('searchResults').classList.add('open');
+  }, 200);
+}
+
+function openSearch() {
+  if (document.getElementById('searchInput').value) handleSearch(document.getElementById('searchInput').value);
+}
+
+function closeSearch() { document.getElementById('searchResults').classList.remove('open'); }
+
+function closeSearchDelay() { setTimeout(closeSearch, 200); }
+
+// ─── NAVIGATION ──────────────────────────────────────────────────────
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById('page-' + name);
+  if (el) el.classList.add('active');
+
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  if (name === 'liked') renderLiked();
+}
+
+function setActive(el) {
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ─── AUTH MODAL ──────────────────────────────────────────────────────
+function openModal(mode) {
+  document.getElementById('authModal').classList.add('open');
+  switchTab(mode);
+}
+
+function closeModal() { document.getElementById('authModal').classList.remove('open'); }
+
+function closeModalOutside(e) { if (e.target === document.getElementById('authModal')) closeModal(); }
+
+function switchTab(mode) {
+  document.getElementById('loginForm').style.display = mode === 'login' ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = mode === 'register' ? 'block' : 'none';
+  document.getElementById('tabLogin').className = 'modal-tab' + (mode === 'login' ? ' active' : '');
+  document.getElementById('tabRegister').className = 'modal-tab' + (mode === 'register' ? ' active' : '');
+  document.getElementById('modalTitle').textContent = mode === 'login' ? 'Вход' : 'Регистрация';
+  document.getElementById('modalSub').textContent = mode === 'login' ? 'Рады видеть тебя снова!' : 'Создай аккаунт бесплатно';
+}
+
+function doLogin() {
+  const email = document.getElementById('loginEmail').value;
+  const pass = document.getElementById('loginPass').value;
+  if (!email || !pass) { showToast('Заполните все поля'); return; }
+  closeModal();
+  showToast(`Добро пожаловать! 🎵`);
+  document.querySelector('.btn-auth').textContent = email.split('@')[0];
+  document.querySelector('.btn-signup').style.display = 'none';
+}
+
+function doRegister() {
+  const name = document.getElementById('regName').value;
+  const email = document.getElementById('regEmail').value;
+  const pass = document.getElementById('regPass').value;
+  if (!name || !email || !pass) { showToast('Заполните все поля'); return; }
+  if (pass.length < 8) { showToast('Пароль минимум 8 символов'); return; }
+  closeModal();
+  showToast(`Аккаунт создан! Добро пожаловать, ${name} 🎉`);
+  document.querySelector('.btn-auth').textContent = name;
+  document.querySelector('.btn-signup').style.display = 'none';
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────────
+let toastTimeout;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── KEYBOARD ────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+  if (e.code === 'ArrowRight') nextTrack();
+  if (e.code === 'ArrowLeft') prevTrack();
+});
+
+// ─── START ───────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
